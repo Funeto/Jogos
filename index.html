@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Joguinhos</title>
+    <link rel="icon" type="image/x-icon" href="img/xxx.ico">
+    <link href="https://fonts.cdnfonts.com/css/depixel" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: url("img/moebius2.png"), no-repeat;
+            background-size: 100%;
+        }
+        h1 {
+            text-align: center;
+            font-size: 30px;
+            margin-bottom: 40px;
+            font-family: 'DePixel', sans-serif;
+            -webkit-text-stroke-width: 1px;
+            -webkit-text-stroke-color: #000;
+            color: white;                          
+        }
+        #showcase {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 1300px; /* 4 colunas de 200px + 3 espaços de 10px */
+            margin: auto;
+        }   
+        .game {
+            width: 260px;
+            height: 150px; /* Aumente a altura para tornar o jogo mais retangular */
+            margin: 10px; /* Aumente a margem para adicionar mais espaço entre os jogos */
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #000;
+            transition: transform .2s;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'DePixel', sans-serif;
+            font-size: 12px;
+                                                
+        }
+        .game:hover {
+            transform: scale(1.1);
+        }
+        .game img {
+            width: 100%;
+            height: 100%;
+        }
+        .game .title {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+            text-align: left;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Joguinhos</h1>
+    <div id="showcase"></div>
+
+    <script>
+        const games = [
+            { title: 'Malditos Óvnis', img: 'img/jogos/ruinadosinvasores.png', link: 'jogo.html'},
+            { title: 'Campo Minado', img: 'img/jogos/campominado.png', link: 'campo.html'},
+            // Adicione mais jogos aqui
+        ];
+
+        const showcase = document.getElementById('showcase');
+
+        games.forEach(game => {
+            const gameDiv = document.createElement('div');
+            gameDiv.className = 'game';
+
+            const img = document.createElement('img');
+            img.src = game.img;
+
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'title';
+            titleDiv.textContent = game.title;
+
+            gameDiv.appendChild(img);
+            gameDiv.appendChild(titleDiv);
+
+            // Adicione um evento de clique ao gameDiv para redirecionar para a página do jogo
+            gameDiv.addEventListener('click', () => {
+                window.location.href = game.link;
+            });
+
+            showcase.appendChild(gameDiv);
+        });
+    </script>
+</body>
+</html>

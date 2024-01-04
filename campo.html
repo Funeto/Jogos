@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Campo Minado</title>
+    <link rel="icon" type="image/x-icon" href="img/bandeira.ico">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            user-select: none;
+        }
+        #board {
+            display: flex;
+            flex-wrap: wrap;
+            width: 480px; /* Adjusted to account for the border */
+            margin: auto;
+        }
+        .cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 24px;
+            height: 24px;
+            border: 1px solid black;
+            box-sizing: border-box; /* Include the border in the width and height */
+            text-align: center;
+            background-color: lightgray;
+            line-height: 20px;
+            font-weight: bold;
+        }
+        .revealed {
+            background-color: #f0f0f0;
+        }
+        .bomb {
+            background-color: black;
+            color: white;
+        }
+        .flagged::before {
+            content: "🚩";
+            font-size: 12px;
+            line-height: 0;
+        }
+        .zero {
+            color: transparent;
+        }
+        .one {
+            color: blue;
+        }
+        .two {
+            color: green;
+        }
+        .three {
+            color: red;
+        }
+        .four {
+            color: darkblue;
+        }
+        .five {
+            color: darkred;
+        }
+        .six {
+            color: darkcyan;
+        }
+        .eight {
+            color: grey;
+        }
+        #restart {
+            width: 500px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: lightgrey;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid black;
+        }
+        #restart:hover {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div id="board"><div id="restart">Reiniciar</div></div>
+    <script>
+        const boardSize = 20;
+        const board = Array(boardSize).fill().map(() => Array(boardSize).fill(0));
+        const boardElement = document.getElementById('board');
+        const cells = [];
+
+        // Create the board elements
+        for (let i = 0; i < boardSize; i++) {
+            cells[i] = [];
+            for (let j = 0; j < boardSize; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.addEventListener('click', () => {
+                    if (!cell.classList.contains('flagged')) {
+                        if (!boardElement.classList.contains('started')) {
+                            // Populate the board with bombs, excluding the first clicked cell and its neighbors
+                            for (let x = 0; x < boardSize; x++) {
+                                for (let y = 0; y < boardSize; y++) {
+                                    if (Math.random() < 0.26 && !(x >= i - 1 && x <= i + 1 && y >= j - 1 && y <= j + 1)) {
+                                        board[x][y] = 'B';
+                                    }
+                                }
+                            }
+
+                            // Calculate the numbers
+                            for (let x = 0; x < boardSize; x++) {
+                                for (let y = 0; y < boardSize; y++) {
+                                    if (board[x][y] !== 'B') {
+                                        let count = 0;
+                                        for (let dx = -1; dx <= 1; dx++) {
+                                            for (let dy = -1; dy <= 1; dy++) {
+                                                if (board[x + dx] && board[x + dx][y + dy] === 'B') {
+                                                    count++;
+                                                }
+                                            }
+                                        }
+                                        board[x][y] = count;
+                                    }
+                                }
+                            }
+
+                            boardElement.classList.add('started');
+                        }
+
+                        reveal(i, j);
+                    }
+                });
+                cell.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    if (!cell.textContent) {
+                        cell.classList.toggle('flagged');
+                    }
+                });
+                boardElement.appendChild(cell);
+                cells[i][j] = cell;
+            }
+        }
+
+        function reveal(i, j) {
+            const cell = cells[i][j];
+            cell.textContent = board[i][j];
+            cell.classList.add('revealed');
+            cell.classList.remove('flagged');
+            if (board[i][j] === 'B') {
+                cell.classList.add('bomb');
+                // If a bomb is revealed, end the game and reveal all cells
+                for (let x = 0; x < boardSize; x++) {
+                    for (let y = 0; y < boardSize; y++) {
+                        cells[x][y].textContent = board[x][y];
+                        cells[x][y].classList.add('revealed');
+                        cells[x][y].classList.remove('flagged');
+                        if (board[x][y] === 'B') {
+                            cells[x][y].classList.add('bomb');
+                        } else {
+                            cells[x][y].classList.add(['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'][board[x][y]]);
+                        }
+                    }
+                }
+            } else {
+                cell.classList.add(['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight'][board[i][j]]);
+                if (board[i][j] === 0) {
+                    for (let x = -1; x <= 1; x++) {
+                        for (let y = -1; y <= 1; y++) {
+                            if (cells[i + x] && cells[i + x][j + y] && !cells[i + x][j + y].textContent) {
+                                reveal(i + x, j + y);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function reloadPage() {
+            location.reload();
+        }
+
+        document.getElementById('restart').addEventListener('click', reloadPage);
+
+    </script>
+</body>
+</html>
