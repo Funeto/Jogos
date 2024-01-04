@@ -5,6 +5,7 @@
     <title>Joguinhos</title>
     <link rel="icon" type="image/x-icon" href="img/xxx.ico">
     <link href="https://fonts.cdnfonts.com/css/depixel" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="img/estrela.ico">
     <style>
         body {
             display: flex;
@@ -22,6 +23,9 @@
             -webkit-text-stroke-width: 1px;
             -webkit-text-stroke-color: #000;
             color: white;                          
+        }
+        img::before {
+            display: none !important;
         }
         #showcase {
             display: flex;
@@ -73,6 +77,7 @@
         const games = [
             { title: 'Malditos Óvnis', img: 'img/jogos/ruinadosinvasores.png', link: 'jogo.html'},
             { title: 'Campo Minado', img: 'img/jogos/campominado.png', link: 'campo.html'},
+            { title: 'Jogo das Cores', img: 'img/jogos/jogodascores.png', link: 'cores/jogodascores.html'},
             // Adicione mais jogos aqui
         ];
 

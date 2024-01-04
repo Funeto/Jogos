@@ -1,0 +1,47 @@
+* {
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	list-style: none;
+	text-decoration: none;
+    font-family: "Trebuchet MS";
+    border: none;
+}
+.meio {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.grid {
+    width: 612px;
+    display: grid;
+    grid-gap: 6px;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+.button {
+    height: 200px;
+    cursor: pointer;
+}
+.button:hover {
+    opacity: 0.8;
+}
+.visor {
+    width: 100%;
+    height: 70px;
+    text-align: center;
+    font-size: 60px;
+    margin-bottom: 20px;
+}
+.gerar {
+    background: lightgrey;
+    grid-column-start: 1;
+    grid-column-end: 4;
+    height: 60px;
+    font-size: 30px;
+    cursor: pointer;
+    color: #444444;
+}
+.gerar:hover {
+    background: #C7C7C7;
+}

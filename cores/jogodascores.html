@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    	<title>Jogo das Cores</title>
+        <meta charset='utf-8' lang='pt-br'>
+        <script src="https://kit.fontawesome.com/07069c0e3b.js" crossorigin="anonymous"></script>
+        <script src="joguinho.js"></script>
+        <link rel="icon" type="image/x-icon" href="../img/cores.ico">
+        <link rel="stylesheet" type="text/css" href="joguinho.css">
+    </head>
+    <body  id="gride">
+    	<div class="meio">
+            <div id="pontos">Pontos: 0</div>
+	        <div class="numeros"><h1 class="visor" id="visor">
+                <span id="redValue" style="color: red;"></span>
+                <span id="greenValue" style="color: green;"></span>
+                <span id="blueValue" style="color: blue;"></span></h1></div>
+	        <div class="grid">
+	            <button class="button" id="1" onclick="resultado(1)"></button>
+	            <button class="button" id="2" onclick="resultado(2)"></button>
+	            <button class="button" id="3" onclick="resultado(3)"></button>
+	            <button class="gerar" onclick="gerar()"><i class="far fa-square"></i></button>
+	        </div>
+    	</div>
+    </body>
+</html>
