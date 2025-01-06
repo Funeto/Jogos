@@ -57,14 +57,12 @@
 
         // Função de movimentação relativa da câmera
         function moveCamera() {
-            // Calcula as direções para frente, para trás, esquerda e direita baseadas na câmera
             var direction = new THREE.Vector3();
             camera.getWorldDirection(direction);  // Direção da frente da câmera
             var right = new THREE.Vector3();
             right.crossVectors(camera.up, direction);  // Direção para a direita da câmera
             var up = camera.up.clone();  // Direção para cima da câmera
 
-            // Movimentos em relação à câmera
             if (moveForward) camera.position.addScaledVector(direction, moveSpeed);  // Movimento para frente
             if (moveBackward) camera.position.addScaledVector(direction, -moveSpeed);   // Movimento para trás
             if (moveLeft) camera.position.addScaledVector(right, moveSpeed);  // Movimento para a esquerda
@@ -75,11 +73,11 @@
 
         // Função de rotação da câmera
         function rotateCamera() {
-            var rotationSpeed = 0.01;  // Nova velocidade de rotação
-            if (rotateUp) camera.rotation.x -= rotationSpeed;  // 8 (subir)
-            if (rotateDown) camera.rotation.x += rotationSpeed;  // 2 (baixar)
-            if (rotateLeft) camera.rotation.y -= rotationSpeed;  // 4 (esquerda)
-            if (rotateRight) camera.rotation.y += rotationSpeed; // 6 (direita)
+            var rotationSpeed = 0.01;
+            if (rotateUp) camera.rotation.x -= rotationSpeed;
+            if (rotateDown) camera.rotation.x += rotationSpeed;
+            if (rotateLeft) camera.rotation.y -= rotationSpeed;
+            if (rotateRight) camera.rotation.y += rotationSpeed;
         }
 
         // Função de animação
@@ -88,6 +86,7 @@
 
             moveCamera();
             rotateCamera();
+            updateProjectiles();  // Atualiza a movimentação das esferas disparadas
             renderer.render(scene, camera);
         }
 
@@ -104,25 +103,72 @@
         var rotateLeft = false;
         var rotateRight = false;
 
+        // Variáveis para o disparo de esferas
+        var projectiles = [];  // Lista de esferas disparadas
+
+        // Função para disparar uma esfera
+        function shootBall() {
+            var ballGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+            var ballMaterial = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff }); // Cor aleatória
+            var ball = new THREE.Mesh(ballGeometry, ballMaterial);
+
+            // Definir a posição inicial da esfera (na frente da câmera)
+            var direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);  // Direção da câmera
+            ball.position.copy(camera.position).add(direction);  // A esfera começa à frente da câmera
+
+            scene.add(ball);
+
+            // A velocidade da esfera e a distância que ela vai percorrer
+            var speed = 0.2;
+            var maxDistance = 50;
+            var distanceTravelled = 0;
+
+            // Função de movimento da esfera
+            ball.userData = { direction: direction, speed: speed, distanceTravelled: 0, maxDistance: maxDistance };
+
+            // Armazenar a esfera no array de projéteis
+            projectiles.push(ball);
+        }
+
+        // Atualiza as esferas disparadas
+        function updateProjectiles() {
+            for (var i = projectiles.length - 1; i >= 0; i--) {
+                var ball = projectiles[i];
+                if (ball.userData.distanceTravelled < ball.userData.maxDistance) {
+                    // Move a esfera na direção da câmera
+                    var moveStep = ball.userData.direction.clone().multiplyScalar(ball.userData.speed);
+                    ball.position.add(moveStep);
+                    ball.userData.distanceTravelled += ball.userData.speed;
+                } else {
+                    // Remove a esfera após ela atingir a distância máxima
+                    scene.remove(ball);
+                    projectiles.splice(i, 1); // Remover da lista
+                }
+            }
+        }
+
         // Event Listener para as teclas WASD, Shift (descer) e Space (subir)
         window.addEventListener('keydown', function (event) {
-            // Movimentação (WASD, Space, Shift)
-            if (event.key === 'w' || event.key === 'W') moveForward = true;  // W para frente
-            if (event.key === 's' || event.key === 'S') moveBackward = true; // S para trás
-            if (event.key === 'a' || event.key === 'A') moveLeft = true;    // A para a esquerda
-            if (event.key === 'd' || event.key === 'D') moveRight = true;   // D para a direita
-            if (event.key === ' ' || event.key === 'Spacebar') moveUp = true;  // Espaço para subir
-            if (event.key === 'Shift') moveDown = true;  // Shift para descer
+            if (event.key === 'w' || event.key === 'W') moveForward = true;
+            if (event.key === 's' || event.key === 'S') moveBackward = true;
+            if (event.key === 'a' || event.key === 'A') moveLeft = true;
+            if (event.key === 'd' || event.key === 'D') moveRight = true;
+            if (event.key === ' ' || event.key === 'Spacebar') moveUp = true;  
+            if (event.key === 'Shift') moveDown = true;
 
-            // Rotação (teclado numérico 2, 4, 6, 8)
-            if (event.key === '8') rotateDown = true;  // 2 para baixar
-            if (event.key === '2') rotateUp = true;    // 8 para subir
-            if (event.key === '6') rotateLeft = true;  // 4 para esquerda
-            if (event.key === '4') rotateRight = true; // 6 para direita
+            // Disparo de esfera (tecla de espaço)
+            if (event.key === ' ' || event.key === 'Spacebar') {
+                shootBall(); // Dispara uma esfera
+            }
+
+            if (event.key === '8') rotateDown = true;
+            if (event.key === '2') rotateUp = true;
+            if (event.key === '6') rotateLeft = true;
+            if (event.key === '4') rotateRight = true;
         });
 
         window.addEventListener('keyup', function (event) {
-            // Movimentação
             if (event.key === 'w' || event.key === 'W') moveForward = false;
             if (event.key === 's' || event.key === 'S') moveBackward = false;
             if (event.key === 'a' || event.key === 'A') moveLeft = false;
@@ -130,7 +176,6 @@
             if (event.key === ' ' || event.key === 'Spacebar') moveUp = false;
             if (event.key === 'Shift') moveDown = false;
 
-            // Rotação
             if (event.key === '8') rotateDown = false;
             if (event.key === '2') rotateUp = false;
             if (event.key === '6') rotateLeft = false;
