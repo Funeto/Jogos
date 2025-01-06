@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="img/teste3d.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação de Mundo 3D</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Incluindo o Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+        // Cena, câmera e renderizador
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Criando o chão plano com grid
+        var gridSize = 20;  // Tamanho do grid
+        var gridDivisions = 10;  // Divisões do grid
+        var gridHelper = new THREE.GridHelper(gridSize, gridDivisions);
+        scene.add(gridHelper);
+
+        // Adicionando uma luz para iluminar a cena
+        var light = new THREE.AmbientLight(0x404040); // Luz suave
+        scene.add(light);
+
+        // Ajustando a posição inicial da câmera
+        camera.position.set(0, 5, 20); // Posição inicial
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+
+        // Velocidade de movimentação
+        var moveSpeed = 0.1;
+
+        // Vetores para armazenar as direções
+        var moveForward = false;
+        var moveBackward = false;
+        var moveLeft = false;
+        var moveRight = false;
+        var moveUp = false;
+        var moveDown = false;
+
+        // Função de movimentação relativa da câmera
+        function moveCamera() {
+            // Calcula as direções para frente, para trás, esquerda e direita baseadas na câmera
+            var direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);  // Direção da frente da câmera
+            var right = new THREE.Vector3();
+            right.crossVectors(camera.up, direction);  // Direção para a direita da câmera
+            var up = camera.up.clone();  // Direção para cima da câmera
+
+            // Movimentos em relação à câmera
+            if (moveForward) camera.position.addScaledVector(direction, moveSpeed);  // Movimento para frente
+            if (moveBackward) camera.position.addScaledVector(direction, -moveSpeed);   // Movimento para trás
+            if (moveLeft) camera.position.addScaledVector(right, moveSpeed);  // Movimento para a esquerda
+            if (moveRight) camera.position.addScaledVector(right, -moveSpeed);  // Movimento para a direita
+            if (moveUp) camera.position.addScaledVector(up, moveSpeed);  // Movimento para cima
+            if (moveDown) camera.position.addScaledVector(up, -moveSpeed);  // Movimento para baixo
+        }
+
+        // Função de rotação da câmera
+        function rotateCamera() {
+            var rotationSpeed = 0.01;  // Nova velocidade de rotação
+            if (rotateUp) camera.rotation.x -= rotationSpeed;  // 8 (subir)
+            if (rotateDown) camera.rotation.x += rotationSpeed;  // 2 (baixar)
+            if (rotateLeft) camera.rotation.y -= rotationSpeed;  // 4 (esquerda)
+            if (rotateRight) camera.rotation.y += rotationSpeed; // 6 (direita)
+        }
+
+        // Função de animação
+        function animate() {
+            requestAnimationFrame(animate);
+
+            moveCamera();
+            rotateCamera();
+            renderer.render(scene, camera);
+        }
+
+        // Função de ajuste ao redimensionar a janela
+        window.addEventListener('resize', function () {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
+
+        // Variáveis para rotação da câmera
+        var rotateUp = false;
+        var rotateDown = false;
+        var rotateLeft = false;
+        var rotateRight = false;
+
+        // Event Listener para as teclas WASD, Shift (descer) e Space (subir)
+        window.addEventListener('keydown', function (event) {
+            // Movimentação (WASD, Space, Shift)
+            if (event.key === 'w' || event.key === 'W') moveForward = true;  // W para frente
+            if (event.key === 's' || event.key === 'S') moveBackward = true; // S para trás
+            if (event.key === 'a' || event.key === 'A') moveLeft = true;    // A para a esquerda
+            if (event.key === 'd' || event.key === 'D') moveRight = true;   // D para a direita
+            if (event.key === ' ' || event.key === 'Spacebar') moveUp = true;  // Espaço para subir
+            if (event.key === 'Shift') moveDown = true;  // Shift para descer
+
+            // Rotação (teclado numérico 2, 4, 6, 8)
+            if (event.key === '8') rotateDown = true;  // 2 para baixar
+            if (event.key === '2') rotateUp = true;    // 8 para subir
+            if (event.key === '6') rotateLeft = true;  // 4 para esquerda
+            if (event.key === '4') rotateRight = true; // 6 para direita
+        });
+
+        window.addEventListener('keyup', function (event) {
+            // Movimentação
+            if (event.key === 'w' || event.key === 'W') moveForward = false;
+            if (event.key === 's' || event.key === 'S') moveBackward = false;
+            if (event.key === 'a' || event.key === 'A') moveLeft = false;
+            if (event.key === 'd' || event.key === 'D') moveRight = false;
+            if (event.key === ' ' || event.key === 'Spacebar') moveUp = false;
+            if (event.key === 'Shift') moveDown = false;
+
+            // Rotação
+            if (event.key === '8') rotateDown = false;
+            if (event.key === '2') rotateUp = false;
+            if (event.key === '6') rotateLeft = false;
+            if (event.key === '4') rotateRight = false;
+        });
+
+        // Iniciando a animação
+        animate();
+    </script>
+</body>
+</html>
