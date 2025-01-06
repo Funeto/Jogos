@@ -3,7 +3,6 @@
 <head>
     <meta charset="utf-8" />
     <title>Joguinhos</title>
-    <link rel="icon" type="image/x-icon" href="img/xxx.ico">
     <link href="https://fonts.cdnfonts.com/css/depixel" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="img/estrela.ico">
     <style>
@@ -12,8 +11,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background: url("img/moebius2.png"), no-repeat;
-            background-size: 100%;
+            background: url("img/moebius2.png") no-repeat center center fixed;
+            background-size: cover; /* Ajuste para cobrir a tela inteira */
         }
         h1 {
             text-align: center;
@@ -66,6 +65,9 @@
             box-sizing: border-box;
             text-align: left;
             font-weight: bold;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
     </style>
 </head>
