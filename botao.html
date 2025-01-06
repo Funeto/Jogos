@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        #canvas {
+            border: 1px solid black;
+            position: absolute;
+            top: 47%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: crosshair;
+        }
+        #colors {
+		    width: 1300px; /* mesma largura que o canvas */
+		    display: flex;
+		    justify-content: space-between;
+		    position: absolute;
+		    bottom: 10px;
+		    left: 50%;
+		    transform: translateX(-50%);
+		}
+		.color {
+		    flex: 1 0 auto;
+		    height: 30px;
+		    cursor: pointer;
+		}
+    </style>
+</head>
+<body>
+    <canvas id="canvas" width="1300" height="580"></canvas>
+    <div id="colors"></div>
+
+    <script>
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+
+        var painting = false;
+
+        function startPaint(e) {
+            painting = true;
+            draw(e);
+        }
+
+        function endPaint() {
+            painting = false;
+            ctx.beginPath();
+        }
+
+        function draw(e) {
+            if (!painting) return;
+            ctx.lineWidth = 18;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = color;
+
+            var rect = canvas.getBoundingClientRect();
+            var x = e.clientX - rect.left;
+            var y = e.clientY - rect.top;
+
+            ctx.lineTo(x, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+        }
+
+        canvas.addEventListener('mousedown', startPaint);
+        canvas.addEventListener('mouseup', endPaint);
+        canvas.addEventListener('mousemove', draw);
+
+        var colors = ['red', 'orange', 'yellow', 'green', 'blue', 'indigo', 'violet', 'black', 'white', 'brown'];
+        var colorDiv = document.getElementById('colors');
+        var color = 'black';
+
+        for (let i = 0; i < colors.length; i++) {
+		    var div = document.createElement('div');
+		    div.style.backgroundColor = colors[i];
+		    div.className = 'color';
+		    div.addEventListener('click', function() {
+		        color = colors[i];
+		    });
+		    colorDiv.appendChild(div);
+		}
+    </script>
+</body>
+</html>

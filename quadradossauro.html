@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="img/quadrado.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quadradossauro</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: limegreen;
+            font-family: Arial, sans-serif;
+        }
+        
+        canvas {
+            display: block;
+            background-color: purple;
+            margin: 0 auto;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 30%; /* Ajuste para mover a mensagem mais para cima */
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
+            font-weight: bold;
+            color: black;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <div id="gameOver">Fim de Jogo</div>
+
+    <script>
+        // Setup do canvas e contexto
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const jumpSound = new Audio('aud/jump.mp3');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight * 0.75;
+
+        // Variáveis do jogo
+        let player = {
+            x: canvas.width / 4, // Posição X do quadrado
+            y: canvas.height - 80, // Coloca o quadrado no chão (ajustar este valor)
+            width: 50,
+            height: 50,
+            velocityY: 0,
+            jumpPower: -20,
+            isJumping: false
+        };
+
+        let obstacles = [];
+        let score = 0;
+        let gameOver = false;
+        const gravity = 0.8;
+        const obstacleSpeed = 6;
+
+        // Função para desenhar o jogador (quadrado)
+        function drawPlayer() {
+            ctx.fillStyle = 'grey';
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+        }
+
+        // Função para criar obstáculos (triângulos), com distância variável entre 250 e 550 pixels
+        function createObstacle() {
+            const minDistance = 250; // Distância mínima entre os obstáculos
+            const maxDistance = 550; // Distância máxima entre obstáculos
+            const obstacleX = obstacles.length > 0 ? obstacles[obstacles.length - 1].x + (Math.random() * (maxDistance - minDistance) + minDistance) : canvas.width;
+
+            let obstacleHeight = 20 + Math.random() * 80; // Altura dos obstáculos agora entre 60 e 180
+
+            let obstacle = {
+                x: obstacleX,
+                y: canvas.height, // A base do triângulo fica no chão, sem espaço abaixo
+                width: 40,
+                height: obstacleHeight,
+                speed: obstacleSpeed,
+                passed: false // Marca se o obstáculo foi "passado" pelo jogador
+            };
+
+            obstacles.push(obstacle);
+        }
+        // Função para desenhar os obstáculos
+        function drawObstacles() {
+            ctx.fillStyle = '#e74c3c';
+            obstacles.forEach(obstacle => {
+                ctx.beginPath();
+                ctx.moveTo(obstacle.x, obstacle.y); // Ponto de início (base do triângulo)
+                ctx.lineTo(obstacle.x + obstacle.width / 2, obstacle.y - obstacle.height); // Ponto do topo do triângulo
+                ctx.lineTo(obstacle.x + obstacle.width, obstacle.y); // Outro ponto da base do triângulo
+                ctx.closePath();
+                ctx.fill();
+            });
+        }
+
+        // Função para atualizar a posição dos obstáculos
+        function updateObstacles() {
+            obstacles.forEach(obstacle => {
+                obstacle.x -= obstacle.speed;
+            });
+            // Remover obstáculos que saem da tela
+            obstacles = obstacles.filter(obstacle => obstacle.x + obstacle.width > 0);
+        }
+
+        // Função para verificar colisão com os obstáculos
+        function checkCollisions() {
+            obstacles.forEach(obstacle => {
+                if (player.x + player.width > obstacle.x && player.x < obstacle.x + obstacle.width) {
+                    if (player.y + player.height > obstacle.y - obstacle.height) {
+                        gameOver = true;
+                        document.getElementById('gameOver').style.display = 'block';
+                    }
+                }
+            });
+        }
+
+        // Função de pulo
+        function jump() {
+            if (!player.isJumping) {
+                player.velocityY = player.jumpPower;
+                player.isJumping = true;
+                jumpSound.play(); // Toca o som de pulo quando o jogador pula
+            }
+        }
+
+        // Função para atualizar o movimento do jogador
+        function updatePlayer() {
+            player.y += player.velocityY;
+            player.velocityY += gravity;
+
+            // Impede que o jogador "passe" do chão e garante que fique no mesmo nível dos obstáculos
+            if (player.y > canvas.height - player.height) {
+                player.y = canvas.height - player.height;  // Coloca a base do quadrado no chão
+                player.velocityY = 0;
+                player.isJumping = false;
+            }
+        }
+
+        // Função para desenhar o fundo e o placar
+        function drawBackground() {
+            ctx.fillStyle = 'skyblue';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = 'black';
+            ctx.font = '24px Arial';
+            ctx.fillText('Pontos: ' + score, 20, 40);
+        }
+
+        // Função para atualizar a lógica do jogo
+        function updateGame() {
+            if (gameOver) return;
+
+            // Atualiza obstáculos e verifica colisões
+            updateObstacles();
+            checkCollisions();
+
+            // Atualiza a posição do jogador
+            updatePlayer();
+
+            // Atualiza a tela
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackground();
+            drawPlayer();
+            drawObstacles();
+
+            // Aumenta o score
+            score++;
+
+            // Criação de novos obstáculos
+            if (Math.random() < 0.02) {
+                createObstacle();
+            }
+
+            // Continuar o loop do jogo
+            requestAnimationFrame(updateGame);
+        }
+
+        // Função de inicialização
+        function startGame() {
+            gameOver = false;
+            score = 0;
+            obstacles = [];
+            player.y = canvas.height - 80;
+            player.velocityY = 0;
+            player.isJumping = false;
+            document.getElementById('gameOver').style.display = 'none';
+            updateGame();
+        }
+
+        // Função para reiniciar o jogo
+        function restartGame() {
+            // Reinicia o jogo
+            gameOver = false;
+            score = 0;
+            obstacles = [];
+            player.y = canvas.height - 80;
+            player.velocityY = 0;
+            player.isJumping = false;
+            document.getElementById('gameOver').style.display = 'none';
+            updateGame();
+        }
+
+        // Adicionar listener de eventos de teclado
+        window.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'ArrowUp') {
+                // Se o jogo acabou, reinicia ao pressionar "espaço"
+                if (gameOver) {
+                    restartGame();
+                } else {
+                    jump();
+                }
+            }
+        });
+
+        // Iniciar o jogo assim que o jogador carregar a página
+        startGame();
+    </script>
+</body>
+</html>
