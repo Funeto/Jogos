@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Malditos Óvnis</title>
+  <link rel="icon" type="image/x-icon" href="img/nave.ico">
+<style>
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  background-color: black;
+  user-select: none;
+}
+#game {
+  position: relative;
+  height: 600px;
+  width: 800px;
+  background-image: url(https://t3.ftcdn.net/jpg/02/04/57/44/360_F_204574498_8pjn7DPA0LouG2MlaQCcZOkLvsDPfMId.jpg);
+  background-size: cover;
+  border:1px solid black;
+}
+.nave, .bala, .inimigo {
+  position: absolute;
+}
+.nave {
+	width: 60px;
+	user-select: none;
+}
+.bala {
+  width: 3px;
+  height: 15px;
+  border-radius: 5px;
+  background-color: white;
+}
+.inimigo {
+  width: 60px;
+}
+button {
+  position: absolute;
+  border: none;
+  font-size: 24px;
+  font-family: "Times New Roman", Times, serif;
+  background: none;
+  color: white;
+  top: 60%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 10px 10px 10px 10px;
+  transition: 0.3s;
+  margin-top: 10px;
+  text-shadow:1px 1px 20px #fff, 1px 1px 20px #ccc;
+}
+button:hover {
+	cursor: pointer;
+	-webkit-animation: glow 1s ease-in-out infinite alternate;
+  	-moz-animation: glow 1s ease-in-out infinite alternate;
+  	animation: glow 1s ease-in-out infinite alternate;
+}
+#pontos {
+  position: absolute;
+  font-size: 20px;
+  line-height: 16px;
+  right: 0;
+  top: 0;
+  padding: 10px;
+  color: white;
+  text-shadow:1px 1px 20px #fff, 1px 1px 20px #ccc;
+}
+
+@-webkit-keyframes glow {
+  from {
+    text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #e60073, 0 0 40px #e60073, 0 0 50px #e60073, 0 0 60px #e60073, 0 0 70px #e60073;
+  }
+  to {
+    text-shadow: 0 0 20px #fff, 0 0 30px #ff4da6, 0 0 40px #ff4da6, 0 0 50px #ff4da6, 0 0 60px #ff4da6, 0 0 70px #ff4da6, 0 0 80px #ff4da6;
+  }
+}
+
+@keyframes piscar {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+</style>
+</head>
+<body>
+<div id="game">
+  <img id="nave" class="nave" src="https://cdn-icons-png.flaticon.com/512/2927/2927896.png" style="left: 380px; bottom: 0px;">
+  <div id="pontos">Pontos: 0</div>
+</div>
+
+<script>
+var game = document.getElementById('game');
+var nave = document.getElementById('nave');
+var pontos = document.getElementById('pontos');
+var vidas = 3;
+var imune = false;
+var jogoRodando = true;
+
+var teclas = {
+  65: false, // A
+  68: false, // D
+  87: false, // W
+  83: false  // S
+};
+
+var contadorVidas = document.createElement('div');
+contadorVidas.style.position = 'absolute';
+contadorVidas.style.top = '0';
+contadorVidas.style.left = '0';
+contadorVidas.style.padding = '10px';
+game.appendChild(contadorVidas);
+
+function atualizarContadorVidas() {
+  contadorVidas.innerHTML = '';
+  for (var i = 0; i < vidas; i++) {
+    var vida = document.createElement('img');
+    vida.src = 'https://cdn-icons-png.flaticon.com/512/2589/2589054.png';
+    vida.style.width = '20px';
+    vida.style.height = '20px';
+    vida.style.borderRadius = '50%';
+    vida.style.display = 'inline-block';
+    vida.style.marginRight = '5px';
+    contadorVidas.appendChild(vida);
+  }
+}
+atualizarContadorVidas();
+
+document.onkeydown = function(e) {
+  if (e.keyCode in teclas) {
+    teclas[e.keyCode] = true;
+  }
+};
+
+document.onkeyup = function(e) {
+  if (e.keyCode in teclas) {
+    teclas[e.keyCode] = false;
+  }
+};
+
+game.onclick = function(e) {
+  if (!jogoRodando) return;
+  var bala = document.createElement('div');
+  bala.className = 'bala';
+  bala.style.left = (parseInt(nave.style.left) + 28) + 'px';
+  bala.style.bottom = (parseInt(nave.style.bottom) + 60) + 'px';
+  game.appendChild(bala);
+};
+
+setInterval(function() {
+  if (!jogoRodando) return;
+  var balas = document.getElementsByClassName('bala');
+  for (var i = 0; i < balas.length; i++) {
+    balas[i].style.bottom = (parseInt(balas[i].style.bottom) + 12) + 'px';
+  }
+}, 20);
+
+setInterval(function() {
+  if (!jogoRodando) return;
+  var inimigo = document.createElement('img');
+  inimigo.className = 'inimigo';
+  inimigo.src = 'https://cdn.icon-icons.com/icons2/665/PNG/512/ufo_icon-icons.com_60256.png';
+  inimigo.style.left = Math.random() * 760 + 'px';
+  inimigo.style.bottom = '600px';
+  game.appendChild(inimigo);
+}, 2000);
+
+setInterval(function() {
+  if (!jogoRodando) return;
+  var inimigos = document.getElementsByClassName('inimigo');
+  for (var i = 0; i < inimigos.length; i++) {
+    inimigos[i].style.bottom = (parseInt(inimigos[i].style.bottom) - 5) + 'px';
+    if (parseInt(inimigos[i].style.bottom) < 0) {
+      inimigos[i].parentNode.removeChild(inimigos[i]);
+      pontos.textContent = 'Pontos: ' + (parseInt(pontos.textContent.split(': ')[1]) - 2);
+    }
+  }
+}, 40);
+
+setInterval(function() {
+  if (!jogoRodando) return;
+  var balas = document.getElementsByClassName('bala');
+  var inimigos = document.getElementsByClassName('inimigo');
+  for (var i = 0; i < inimigos.length; i++) {
+    for (var j = 0; j < balas.length; j++) {
+      if (Math.abs(parseInt(inimigos[i].style.left) - parseInt(balas[j].style.left)) < 54 &&
+          Math.abs(parseInt(inimigos[i].style.bottom) - parseInt(balas[j].style.bottom)) < 40) {
+        inimigos[i].parentNode.removeChild(inimigos[i]);
+        balas[j].parentNode.removeChild(balas[j]);
+        pontos.textContent = 'Pontos: ' + (parseInt(pontos.textContent.split(': ')[1]) + 1);
+        break;
+      }
+    }
+    if (!imune && Math.abs(parseInt(inimigos[i].style.left) - parseInt(nave.style.left)) < 38 &&
+        Math.abs(parseInt(inimigos[i].style.bottom) - parseInt(nave.style.bottom)) < 60) {
+      vidas--;
+      atualizarContadorVidas();
+      if (vidas <= 0) {
+        jogoRodando = false;
+        game.innerHTML = '';
+        game.style.backgroundColor = 'black';
+
+        var fimDeJogo = document.createElement('div');
+        fimDeJogo.textContent = 'Fim de Jogo';
+        fimDeJogo.style.color = 'white';
+        fimDeJogo.style.textShadow = '1px 1px 20px #fff, 1px 1px 20px #ccc';
+        fimDeJogo.style.position = 'absolute';
+        fimDeJogo.style.top = '50%';
+        fimDeJogo.style.left = '50%';
+        fimDeJogo.style.fontSize = '50px';
+        fimDeJogo.style.transform = 'translate(-50%, -50%)';
+        game.appendChild(fimDeJogo);
+
+        var botaoReiniciar = document.createElement('button');
+		botaoReiniciar.textContent = 'Reiniciar';
+		botaoReiniciar.onclick = function() {
+		  location.reload();
+		};
+		game.appendChild(botaoReiniciar);
+
+      } else {
+        imune = true;
+        nave.style.animation = 'piscar 0.2s linear 0s 10';
+        setTimeout(function() {
+	      imune = false;
+	      nave.style.animation = '';
+	    }, 1000);
+      }
+      break;
+    }
+  }
+}, 100);
+
+setInterval(function() {
+  if (!jogoRodando) return;
+  if (teclas[65]) { // A
+    var novaPosicao = parseInt(nave.style.left) - 6;
+    if (novaPosicao >= 0) {
+      nave.style.left = novaPosicao + 'px';
+    }
+  }
+  if (teclas[68]) { // D
+    var novaPosicao = parseInt(nave.style.left) + 6;
+    if (novaPosicao <= 760) {
+      nave.style.left = novaPosicao + 'px';
+    }
+  }
+  if (teclas[87]) { // W
+    var novaPosicao = parseInt(nave.style.bottom) + 6;
+    if (novaPosicao <= 560) {
+      nave.style.bottom = novaPosicao + 'px';
+    }
+  }
+  if (teclas[83]) { // S
+    var novaPosicao = parseInt(nave.style.bottom) - 6;
+    if (novaPosicao >= 0) {
+      nave.style.bottom = novaPosicao + 'px';
+    }
+  }
+}, 20);
+
+</script>
+
+</body>
+</html>

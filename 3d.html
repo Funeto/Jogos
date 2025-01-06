@@ -11,14 +11,62 @@
             padding: 0;
             height: 100%;
             overflow: hidden;
-            background: #f0f0f0;
+            background: linear-gradient(45deg, #1e3c72, #2a5298);
+            font-family: Arial, sans-serif;
         }
         canvas {
             display: block;
         }
+        #instructions {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);  /* Fundo escuro semitransparente */
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;  /* Garante que o conteúdo fique sobre o jogo */
+        }
+
+        #instruction-content {
+            background-color: black;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid purple;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.7);
+        }
+
+        #close-instructions {
+            background-color: black;
+            color: white;
+            border: 1px solid purple;
+            padding: 10px 20px;
+            margin-top: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+            transition: 0.1s;
+        }
+
     </style>
 </head>
 <body>
+    <!-- Instruções para o usuário -->
+    <div id="instructions">
+        <div id="instruction-content">
+            <h2>Instruções</h2>
+            <p>Use as teclas W, A, S, D para mover a câmera.</p>
+            <p>Use as teclas 2, 4, 6, 8 para rotacionar a câmera.</p>
+            <p>Clique com o mouse para disparar esferas.</p>
+            <button id="close-instructions">Fechar</button>
+        </div>
+    </div>
+
+
     <!-- Incluindo o Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
@@ -30,24 +78,28 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-        // Criando o chão plano com grid
-        var gridSize = 20;  // Tamanho do grid
-        var gridDivisions = 10;  // Divisões do grid
-        var gridHelper = new THREE.GridHelper(gridSize, gridDivisions);
+        // Criando o chão com um GridHelper branco minimalista
+        var gridSize = 100;  // Tamanho do grid
+        var gridDivisions = 40;  // Divisões do grid
+        var gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0xA020F0, 0xA020F0); // Cor do grid: branco
         scene.add(gridHelper);
 
-        // Adicionando uma luz para iluminar a cena
-        var light = new THREE.AmbientLight(0x404040); // Luz suave
-        scene.add(light);
+        // Luzes mais dinâmicas
+        var ambientLight = new THREE.AmbientLight(0x404040, 1);  // Luz ambiente suave
+        var directionalLight = new THREE.DirectionalLight(0xffffff, 1); // Luz direcional
+        directionalLight.position.set(10, 20, 10).normalize();
+        scene.add(ambientLight);
+        scene.add(directionalLight);
 
         // Ajustando a posição inicial da câmera
         camera.position.set(0, 5, 20); // Posição inicial
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         // Velocidade de movimentação
-        var moveSpeed = 0.1;
+        var moveSpeed = 0.6;
+        var rotateSpeed = 0.02;
 
-        // Vetores para armazenar as direções
+        // Vetores para armazenar as direções de movimento
         var moveForward = false;
         var moveBackward = false;
         var moveLeft = false;
@@ -55,7 +107,19 @@
         var moveUp = false;
         var moveDown = false;
 
-        // Função de movimentação relativa da câmera
+        // Variáveis de rotação da câmera
+        var rotateUp = false;
+        var rotateDown = false;
+        var rotateLeft = false;
+        var rotateRight = false;
+
+        // Variáveis para os projéteis
+        var projectiles = []; // Lista de esferas disparadas
+
+        document.getElementById('close-instructions').addEventListener('click', function() {
+            document.getElementById('instructions').style.display = 'none';
+        });
+        // Função para mover a câmera
         function moveCamera() {
             var direction = new THREE.Vector3();
             camera.getWorldDirection(direction);  // Direção da frente da câmera
@@ -73,43 +137,16 @@
 
         // Função de rotação da câmera
         function rotateCamera() {
-            var rotationSpeed = 0.01;
-            if (rotateUp) camera.rotation.x -= rotationSpeed;
-            if (rotateDown) camera.rotation.x += rotationSpeed;
-            if (rotateLeft) camera.rotation.y -= rotationSpeed;
-            if (rotateRight) camera.rotation.y += rotationSpeed;
+            if (rotateUp) camera.rotation.x -= rotateSpeed;
+            if (rotateDown) camera.rotation.x += rotateSpeed;
+            if (rotateLeft) camera.rotation.y -= rotateSpeed;
+            if (rotateRight) camera.rotation.y += rotateSpeed;
         }
-
-        // Função de animação
-        function animate() {
-            requestAnimationFrame(animate);
-
-            moveCamera();
-            rotateCamera();
-            updateProjectiles();  // Atualiza a movimentação das esferas disparadas
-            renderer.render(scene, camera);
-        }
-
-        // Função de ajuste ao redimensionar a janela
-        window.addEventListener('resize', function () {
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-        });
-
-        // Variáveis para rotação da câmera
-        var rotateUp = false;
-        var rotateDown = false;
-        var rotateLeft = false;
-        var rotateRight = false;
-
-        // Variáveis para o disparo de esferas
-        var projectiles = [];  // Lista de esferas disparadas
 
         // Função para disparar uma esfera
         function shootBall() {
-            var ballGeometry = new THREE.SphereGeometry(0.5, 32, 32);
-            var ballMaterial = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff }); // Cor aleatória
+            var ballGeometry = new THREE.SphereGeometry(2, 32, 32);
+            var ballMaterial = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff, metalness: 0.6, roughness: 0.3 });
             var ball = new THREE.Mesh(ballGeometry, ballMaterial);
 
             // Definir a posição inicial da esfera (na frente da câmera)
@@ -120,18 +157,18 @@
             scene.add(ball);
 
             // A velocidade da esfera e a distância que ela vai percorrer
-            var speed = 0.2;
-            var maxDistance = 50;
+            var speed = 0.6;
+            var maxDistance = 40;
             var distanceTravelled = 0;
 
-            // Função de movimento da esfera
+            // Armazenar a informação da esfera
             ball.userData = { direction: direction, speed: speed, distanceTravelled: 0, maxDistance: maxDistance };
 
-            // Armazenar a esfera no array de projéteis
+            // Adiciona a esfera à lista de projéteis
             projectiles.push(ball);
         }
 
-        // Atualiza as esferas disparadas
+        // Função para atualizar as esferas disparadas
         function updateProjectiles() {
             for (var i = projectiles.length - 1; i >= 0; i--) {
                 var ball = projectiles[i];
@@ -140,50 +177,127 @@
                     var moveStep = ball.userData.direction.clone().multiplyScalar(ball.userData.speed);
                     ball.position.add(moveStep);
                     ball.userData.distanceTravelled += ball.userData.speed;
-                } else {
-                    // Remove a esfera após ela atingir a distância máxima
-                    scene.remove(ball);
-                    projectiles.splice(i, 1); // Remover da lista
                 }
             }
         }
 
-        // Event Listener para as teclas WASD, Shift (descer) e Space (subir)
-        window.addEventListener('keydown', function (event) {
-            if (event.key === 'w' || event.key === 'W') moveForward = true;
-            if (event.key === 's' || event.key === 'S') moveBackward = true;
-            if (event.key === 'a' || event.key === 'A') moveLeft = true;
-            if (event.key === 'd' || event.key === 'D') moveRight = true;
-            if (event.key === ' ' || event.key === 'Spacebar') moveUp = true;  
-            if (event.key === 'Shift') moveDown = true;
+        // Função para criar uma árvore com uma textura 2D
+        function createTree(x, z) {
+            var textureLoader = new THREE.TextureLoader();
+            // URL da imagem da árvore (substitua pelo seu caminho real)
+            var treeTexture = textureLoader.load('https://cdn.pixabay.com/photo/2017/05/12/04/47/coconut-2306081_1280.png'); // Substitua pela URL real da imagem
 
-            // Disparo de esfera (tecla de espaço)
-            if (event.key === ' ' || event.key === 'Spacebar') {
-                shootBall(); // Dispara uma esfera
+            var treeMaterial = new THREE.MeshBasicMaterial({
+                map: treeTexture,
+                transparent: true, // A imagem da árvore deve ser transparente
+                side: THREE.DoubleSide
+            });
+
+            var treeGeometry = new THREE.PlaneGeometry(4, 4); // Tamanho da árvore
+            var tree = new THREE.Mesh(treeGeometry, treeMaterial);
+
+            // Posiciona a árvore aleatoriamente sobre o terreno
+            tree.position.set(x, 2, z);  // Ajuste a altura e a posição
+
+            // Faz com que a árvore olhe sempre para a câmera
+            tree.lookAt(camera.position);
+
+            // Adiciona a árvore à cena
+            scene.add(tree);
+        }
+
+        // Função para criar várias árvores de forma aleatória
+        function addRandomTrees() {
+            var treeCount = 30;  // Quantidade de árvores a serem adicionadas
+            var gridSize = 100;  // Tamanho do terreno onde as árvores serão espalhadas
+
+            for (var i = 0; i < treeCount; i++) {
+                var x = Math.random() * gridSize - gridSize / 2; // Posição aleatória no eixo X
+                var z = Math.random() * gridSize - gridSize / 2; // Posição aleatória no eixo Z
+                createTree(x, z);
             }
+        }
 
-            if (event.key === '8') rotateDown = true;
-            if (event.key === '2') rotateUp = true;
+        // Adiciona árvores à cena
+        addRandomTrees();
+
+        // Função para criar o sol com uma textura de imagem
+        function createSun() {
+            var textureLoader = new THREE.TextureLoader();
+            // URL da imagem do sol (substitua pelo seu caminho real)
+            var sunTexture = textureLoader.load('https://i.ibb.co/CKBd06q/sol.png'); // Substitua pela URL real da imagem
+
+            var sunMaterial = new THREE.MeshBasicMaterial({
+                map: sunTexture,
+                transparent: true,  // A imagem do sol pode ser com fundo transparente se necessário
+                side: THREE.FrontSide
+            });
+
+            var sunGeometry = new THREE.SphereGeometry(35, 32, 32); // Tamanho da esfera do sol
+            var sun = new THREE.Mesh(sunGeometry, sunMaterial);
+
+            // Posiciona o sol no horizonte, afastado no fundo
+            sun.position.set(0, 35, -100);  // Ajuste a posição conforme necessário
+
+            // Adiciona o sol à cena
+            scene.add(sun);
+        }
+
+        // Chame a função para criar o sol ao iniciar
+        createSun();
+
+        // Função de animação
+        function animate() {
+            requestAnimationFrame(animate);
+
+            moveCamera();
+            rotateCamera();
+            updateProjectiles();  // Atualiza a movimentação das esferas disparadas
+
+            // Atualiza as árvores para sempre olharem para a câmera
+            scene.children.forEach(child => {
+                if (child instanceof THREE.Mesh && child.geometry instanceof THREE.PlaneGeometry) {
+                    child.lookAt(camera.position);  // Faz a árvore sempre olhar para a câmera
+                }
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Detectando teclas para movimentação
+        document.addEventListener('keydown', function(event) {
+            // Previne a repetição automática de algumas teclas, especialmente as de movimentação
+            if (event.repeat) return; // Impede que a movimentação continue indefinidamente se a tecla for repetida.
+
+            if (event.key === 'w') moveForward = true;
+            if (event.key === 's') moveBackward = true;
+            if (event.key === 'a') moveLeft = true;
+            if (event.key === 'd') moveRight = true;
+            if (event.key === 'Shift') moveDown = true;
+            if (event.key === ' ') moveUp = true;
             if (event.key === '6') rotateLeft = true;
             if (event.key === '4') rotateRight = true;
+            if (event.key === '8') rotateDown = true;
+            if (event.key === '2') rotateUp = true;
         });
 
-        window.addEventListener('keyup', function (event) {
-            if (event.key === 'w' || event.key === 'W') moveForward = false;
-            if (event.key === 's' || event.key === 'S') moveBackward = false;
-            if (event.key === 'a' || event.key === 'A') moveLeft = false;
-            if (event.key === 'd' || event.key === 'D') moveRight = false;
-            if (event.key === ' ' || event.key === 'Spacebar') moveUp = false;
+        document.addEventListener('keyup', function(event) {
+            if (event.key === 'w') moveForward = false;
+            if (event.key === 's') moveBackward = false;
+            if (event.key === 'a') moveLeft = false;
+            if (event.key === 'd') moveRight = false;
             if (event.key === 'Shift') moveDown = false;
-
-            if (event.key === '8') rotateDown = false;
-            if (event.key === '2') rotateUp = false;
+            if (event.key === ' ') moveUp = false;
             if (event.key === '6') rotateLeft = false;
             if (event.key === '4') rotateRight = false;
+            if (event.key === '8') rotateDown = false;
+            if (event.key === '2') rotateUp = false;
         });
 
-        // Iniciando a animação
-        animate();
+        // Disparando ao clicar
+        window.addEventListener('click', shootBall);
     </script>
 </body>
 </html>
