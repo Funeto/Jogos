@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mergulho Sustentável: Repovoando o Oceano</title>
+    <style>
+        body{margin:0;padding:0;width:100vw;height:100vh;overflow:hidden;display:flex;flex-direction:column;align-items:center;background:#0a0f12;color:#fff;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;}
+        h1{margin:10px 0;font-size:28px;color:#4CAF50;text-shadow:2px 2px 4px rgba(0,0,0,0.5);flex-shrink:0;}
+        #main-content{display:flex;flex-direction:row;width:98%;max-width:1600px;flex:1;margin-bottom:15px;gap:15px;}
+        #game-container{flex:1;position:relative;box-shadow:0 10px 30px rgba(0,0,0,0.8);border:4px solid #2c3e50;border-radius:10px;background:#000;overflow:hidden;}
+        canvas{display:block;width:100%;height:100%;}
+        #ui{position:absolute;top:15px;left:15px;background:rgba(0,0,0,0.85);padding:12px 20px;border-radius:8px;font-size:16px;pointer-events:none;border:1px solid #4CAF50;z-index:10;}
+        #ui p{margin:5px 0;font-weight:bold;}
+        .highlight{color:#4CAF50;font-size:1.1em;} .highlight-sust{color:#00d2ff;font-size:1.1em;}
+        .highlight-lives{color:#ff4757;font-size:1.2em;letter-spacing:2px;} .warning{color:#00d2ff;font-size:0.9em;font-style:italic;}
+        #game-over{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);display:none;flex-direction:column;justify-content:center;align-items:center;z-index:20;color:#fff;text-align:center;}
+        #game-over h2{font-size:48px;color:#ff4757;margin:0 0 10px 0;text-shadow:0 0 15px rgba(255,71,87,0.6);}
+        #game-over p{font-size:20px;margin-bottom:30px;}
+        #game-over button, .shop-btn{background:#2c3e50;color:#fff;border:2px solid #00d2ff;font-weight:bold;cursor:pointer;transition:0.2s;}
+        #game-over button{padding:15px 30px;font-size:20px;border-radius:10px;}
+        #game-over button:hover, .shop-btn:hover{background:#34495e;transform:scale(1.02);}
+        #shop-container{background:#1a252f;padding:15px;border-radius:10px;width:300px;box-sizing:border-box;border:2px solid #34495e;display:flex;flex-direction:column;flex-shrink:0;}
+        #shop-container h2{margin:0 0 5px 0;color:#00d2ff;font-size:22px;text-align:center;}
+        #shop-container > p{margin:0 0 15px 0;font-size:13px;color:#ccc;text-align:center;}
+        .shop-items{display:flex;flex-direction:column;gap:10px;overflow-y:auto;padding-right:5px;flex:1;}
+        .shop-items::-webkit-scrollbar{width:6px;} .shop-items::-webkit-scrollbar-track{background:#121820;border-radius:4px;} .shop-items::-webkit-scrollbar-thumb{background:#34495e;border-radius:4px;}
+        .shop-btn{border-radius:8px;padding:12px 15px;font-size:16px;width:100%;}
+        .shop-btn-content{display:flex;justify-content:space-between;align-items:center;}
+        .shop-btn:active{transform:scale(0.98);} .shop-btn.disabled{opacity:0.5;cursor:not-allowed;border-color:#7f8c8d;color:#7f8c8d;}
+    </style>
+</head>
+<body>
+
+    <h1>Mergulho Sustentável 🌊</h1>
+    <div id="main-content">
+        <div id="game-container">
+            <canvas id="gameCanvas"></canvas>
+            <div id="ui">
+                <p>Vidas: <span id="livesEl" class="highlight-lives">❤️❤️❤️❤️❤️</span></p>
+                <p>Lixo Removido: <span id="score" class="highlight">0</span> / 150</p>
+                <p>Pontos ♻️: <span id="sustScore" class="highlight-sust">0</span></p>
+                <p>Poluição: <span id="pollution">100%</span></p>
+                <p id="statusMicroplastico" class="warning"></p>
+            </div>
+            <div id="game-over">
+                <h2>GAME OVER</h2>
+                <p>O tubarão te pegou! O oceano ainda precisa da sua ajuda.</p>
+                <button onclick="restartGame()">Mergulhar Novamente</button>
+            </div>
+        </div>
+
+        <div id="shop-container">
+            <h2>Loja de Vida 🐠</h2><p>Limpe o oceano e compre vida!</p>
+            <div class="shop-items">
+                <button class="shop-btn" id="btn-sponge" onclick="buyItem('sponge')"><div class="shop-btn-content"><span>🧽 Esponja</span> <span>10 pts</span></div></button>
+                <button class="shop-btn" id="btn-coral" onclick="buyItem('coral')"><div class="shop-btn-content"><span>🪸 Coral</span> <span>20 pts</span></div></button>
+                <button class="shop-btn" id="btn-jellyfish" onclick="buyItem('jellyfish')"><div class="shop-btn-content"><span>🪼 Água Viva</span> <span>15 pts</span></div></button>
+                <button class="shop-btn" id="btn-fish" onclick="buyItem('fish')"><div class="shop-btn-content"><span>🐟 Peixe</span> <span>30 pts</span></div></button>
+                <button class="shop-btn" id="btn-octopus" onclick="buyItem('octopus')"><div class="shop-btn-content"><span>🐙 Polvo</span> <span>60 pts</span></div></button>
+                <button class="shop-btn" id="btn-dolphin" onclick="buyItem('dolphin')"><div class="shop-btn-content"><span>🐬 Golfinho</span> <span>100 pts</span></div></button>
+                <button class="shop-btn" id="btn-turtle" onclick="buyItem('turtle')"><div class="shop-btn-content"><span>🐢 Tartaruga</span> <span>150 pts</span></div></button>
+                <button class="shop-btn" id="btn-whale" onclick="buyItem('whale')"><div class="shop-btn-content"><span>🐋 Baleia</span> <span>300 pts</span></div></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const M = Math, R = M.random, F = M.floor, PI2 = M.PI * 2;
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameContainer = document.getElementById('game-container');
+        const camera = { x: 0, y: 0, w: 800, h: 600 };
+
+        function resizeCanvas() {
+            canvas.width = camera.w = gameContainer.clientWidth;
+            canvas.height = camera.h = gameContainer.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const t = audioCtx.currentTime, osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+            osc.connect(g); g.connect(audioCtx.destination);
+            let d = 0.1;
+            
+            if (type === 'plastic') { osc.type = 'sine'; osc.frequency.setValueAtTime(300, t); osc.frequency.exponentialRampToValueAtTime(50, t + d); g.gain.setValueAtTime(0.5, t); }
+            else if (type === 'sust') { d = 0.2; osc.type = 'square'; osc.frequency.setValueAtTime(600, t); osc.frequency.setValueAtTime(800, t + 0.05); g.gain.setValueAtTime(0.2, t); }
+            else if (type === 'buy') { d = 0.5; osc.type = 'triangle'; osc.frequency.setValueAtTime(440, t); osc.frequency.setValueAtTime(554.37, t + 0.1); osc.frequency.setValueAtTime(659.25, t + 0.2); g.gain.setValueAtTime(0.4, t); }
+            else { d = 0.3; osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t); osc.frequency.exponentialRampToValueAtTime(40, t + d); g.gain.setValueAtTime(0.5, t); }
+            
+            g.gain.exponentialRampToValueAtTime(0.01, t + d);
+            osc.start(t); osc.stop(t + d);
+        }
+
+        const W = 3000, H = 1800, GH = 180, MAX_P = 150;
+        const colorDirty = { r: 25, g: 35, b: 15 }, colorClean = { r: 0, g: 140, b: 200 };
+        const lerpC = (c1, c2, p) => `rgb(${F(c1.r + (c2.r - c1.r) * p)}, ${F(c1.g + (c2.g - c1.g) * p)}, ${F(c1.b + (c2.b - c1.b) * p)})`;
+        // Paleta de cores para os microplásticos
+        const mpColors = ['255,50,50', '50,150,255', '255,255,50', '255,100,200', '255,255,255'];
+
+        let state = 'playing', score = 0, sustScore = 0, lives = 5, invTimer = 0;
+        const keys = { ArrowUp: 0, ArrowDown: 0, ArrowLeft: 0, ArrowRight: 0, w: 0, s: 0, a: 0, d: 0 };
+
+        window.addEventListener('keydown', (e) => { initAudio(); if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key)) e.preventDefault(); if(keys.hasOwnProperty(e.key)) keys[e.key] = 1; }, {passive: false});
+        window.addEventListener('keyup', (e) => { if(keys.hasOwnProperty(e.key)) keys[e.key] = 0; });
+
+        const player = { x: W/2, y: 300, s: 55, spd: 7, e: '🤿', dir: 1 };
+        const shark = { x: W/4, y: H/2, s: 90, spd: 4.5, e: '🦈', vx: -3, vy: 1, timer: 0, st: 'patrol' };
+
+        let items = [], bubbles = [], animals = [], decos = [], texts = [], poll = [], oils = [], micro = [];
+
+        const shop = {
+            sponge: { t: 'static', e: '🧽', c: 10, s: 45 }, coral: { t: 'static', e: '🪸', c: 20, s: 60 },
+            jellyfish: { t: 'animal', e: '🪼', c: 15, spd: 1.5, s: 50 }, fish: { t: 'animal', e: '🐟', c: 30, spd: 4.5, s: 45 },
+            octopus: { t: 'animal', e: '🐙', c: 60, spd: 2, s: 60 }, dolphin: { t: 'animal', e: '🐬', c: 100, spd: 5, s: 80 },
+            turtle: { t: 'animal', e: '🐢', c: 150, spd: 3, s: 70 }, whale: { t: 'animal', e: '🐋', c: 300, spd: 3.5, s: 160 }
+        };
+
+        const itemData = [
+            { cat: 'plastic', e: '🥤', n: 'Copo', p: 1, sp: 1 }, 
+            { cat: 'plastic', e: '🛍️', n: 'Sacola', p: 1, sp: 1 }, 
+            { cat: 'sustainable', e: '🛍️', n: 'Ecobag', p: 0, sp: 10 },
+            { cat: 'plastic', e: '🥫', n: 'Embalagem', p: 1, sp: 1 }, 
+            { cat: 'sustainable', e: '🍶', n: 'Garrafa retornávei', p: 0, sp: 10 },
+            { cat: 'sustainable', e: '♻️', n: 'Reciclagem', p: 0, sp: 10 }
+        ];
+
+        function buyItem(id) {
+            if (state !== 'playing') return;
+            initAudio();
+            const d = shop[id];
+            if (sustScore >= d.c) {
+                sustScore -= d.c; playSound('buy');
+                if (d.t === 'animal') animals.push({ e: d.e, s: d.s, spd: d.spd, x: player.x, y: player.y-50, vx: (R()>0.5?1:-1)*d.spd, vy: (R()-0.5)*d.spd, timer: 0 });
+                else decos.push({ x: player.x, y: H - R()*(GH-30)-20, e: d.e, s: d.s + R()*20 });
+                updUI();
+            } else {
+                playSound('error');
+                const b = document.getElementById('btn-'+id);
+                b.style.background = '#e74c3c'; b.style.borderColor = '#c0392b';
+                setTimeout(() => { b.style.background = ''; b.style.borderColor = ''; }, 300);
+            }
+        }
+
+        function updUI() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('sustScore').innerText = sustScore;
+            document.getElementById('livesEl').innerText = '❤️'.repeat(M.max(0, lives)) + '🖤'.repeat(M.max(0, 5-lives));
+            
+            let pLvl = M.max(0, 100 - F((score/MAX_P)*100));
+            const pEl = document.getElementById('pollution');
+            pEl.innerText = pLvl === 0 ? "0% (Oceano Limpo!)" : pLvl + "%";
+            pEl.style.color = pLvl === 0 || pLvl < 30 ? "#4CAF50" : (pLvl > 70 ? "#e74c3c" : "#f1c40f");
+
+            for (let id in shop) {
+                const b = document.getElementById('btn-'+id);
+                sustScore >= shop[id].c ? b.classList.remove('disabled') : b.classList.add('disabled');
+            }
+        }
+
+        function spawnItem(cat) {
+            const avail = itemData.filter(i => i.cat === cat);
+            items.push({ x: R()*(W-100)+50, y: R()*(H-GH-100)+50, s: 35, vx: (R()-0.5)*1.5, vy: (R()-0.5)*1.5, d: avail[F(R()*avail.length)] });
+        }
+
+        function initGame() {
+            resizeCanvas(); items=[]; decos=[]; animals=[]; bubbles=[]; texts=[]; poll=[]; oils=[]; micro=[];
+            for(let i=0; i<80; i++) decos.push({ x: R()*W, y: H-R()*(GH-30)-20, e: R()>0.5?'🌿':'🌱', s: 35+R()*30 });
+            const pE = ['🛢️','🛞','🥾','☠️','🗑️','🏚️'];
+            for(let i=0; i<100; i++) poll.push({ x: R()*W, y: R()>0.4?H-R()*GH:R()*(H-GH), e: pE[F(R()*pE.length)], s: 40+R()*40, hideAt: 0.1+R()*0.9 });
+            for(let i=0; i<40; i++) oils.push({ x: R()*W, y: R()*H, w: 200+R()*400, h: 100+R()*200 });
+
+            for(let i=0; i<25; i++) {
+                let r = 70+R()*120, dots = [], nD = F(r*0.6);
+                for(let j=0; j<nD; j++) {
+                    let a = R()*PI2, dst = R()*(r-5);
+                    let col = mpColors[F(R()*mpColors.length)]; // Cor aleatória da paleta
+                    dots.push({ dx: M.cos(a)*dst, dy: M.sin(a)*dst, s: R()*2.5+1.5, c: col }); 
+                }
+                micro.push({ x: R()*W, y: R()*(H-GH-50), r, dots });
+            }
+            for(let i=0; i<MAX_P; i++) spawnItem('plastic');
+            for(let i=0; i<90; i++) spawnItem('sustainable');
+            updUI();
+        }
+
+        function restartGame() {
+            score = sustScore = 0; lives = 5; state = 'playing'; player.x = W/2; player.y = 300; shark.x = W/4; shark.y = H/2;
+            document.getElementById('game-over').style.display = 'none'; initGame();
+        }
+
+        setInterval(() => { if(state==='playing' && bubbles.length<80) bubbles.push({ x: R()*W, y: H-R()*GH, s: R()*8+2, spd: R()*3+1, w: R()*PI2 }); }, 150);
+
+        function update() {
+            if (state !== 'playing') return;
+            if (invTimer > 0) invTimer--;
+
+            let p = M.min(score/MAX_P, 1), tox = 1-p, inMicro = false;
+            
+            if (tox > 0.05) {
+                for (let m of micro) {
+                    if (M.hypot(player.x - m.x, player.y - m.y) < m.r + 25) { inMicro = true; break; }
+                }
+            }
+
+            let currSpd = inMicro ? player.spd * (0.4 + (0.6 * p)) : player.spd;
+            document.getElementById('statusMicroplastico').innerText = (inMicro && tox > 0.05) ? "Toxicidade alta! Movimento lento..." : "";
+
+            if (keys.ArrowUp||keys.w) player.y -= currSpd;
+            if (keys.ArrowDown||keys.s) player.y += currSpd;
+            if (keys.ArrowLeft||keys.a) { player.x -= currSpd; player.dir = -1; }
+            if (keys.ArrowRight||keys.d) { player.x += currSpd; player.dir = 1; }
+
+            player.x = M.max(0, M.min(player.x, W)); player.y = M.max(0, M.min(player.y, H-40));
+            camera.x = M.max(0, M.min(player.x - canvas.width/2, W - camera.w));
+            camera.y = M.max(0, M.min(player.y - canvas.height/2, H - camera.h));
+
+            let dxS = player.x - shark.x, dyS = player.y - shark.y, dS = M.hypot(dxS, dyS);
+            if (dS < 450) {
+                shark.st = 'chase'; let a = M.atan2(dyS, dxS);
+                shark.vx = M.cos(a)*shark.spd; shark.vy = M.sin(a)*shark.spd;
+                shark.x += shark.vx; shark.y += shark.vy;
+            } else {
+                shark.st = 'patrol'; shark.x += shark.vx; shark.y += shark.vy; shark.timer++;
+                if (shark.timer > 90 && R() < 0.05) { shark.vx = (R()>0.5?1:-1)*(shark.spd*0.6); shark.vy = (R()-0.5)*(shark.spd*0.6); shark.timer = 0; }
+                if (shark.x < 0 || shark.x > W) shark.vx *= -1; if (shark.y < 0 || shark.y > H-GH) shark.vy *= -1;
+            }
+
+            if (dS < (player.s/2 + shark.s/3) && invTimer <= 0) {
+                playSound('hurt'); lives--; invTimer = 90;
+                player.x += dxS>0?100:-100; player.y += dyS>0?100:-100;
+                updUI();
+                if (lives <= 0) { state = 'gameover'; document.getElementById('game-over').style.display = 'flex'; }
+            }
+
+            for (let i=bubbles.length-1; i>=0; i--) { let b=bubbles[i]; b.y-=b.spd; b.w+=0.05; b.x+=M.sin(b.w)*1.5; if(b.y<-50) bubbles.splice(i,1); }
+            for (let i=texts.length-1; i>=0; i--) { texts[i].y-=1.5; texts[i].life--; if(texts[i].life<=0) texts.splice(i,1); }
+
+            for (let a of animals) {
+                a.x += a.vx; a.y += a.vy; a.timer++;
+                if (a.timer > 180 && R() < 0.02) { a.vx = (R()>0.5?1:-1)*a.spd; a.vy = (R()-0.5)*a.spd; a.timer = 0; }
+                if (a.x<0 || a.x>W) a.vx*=-1; if (a.y<0 || a.y>H-100) a.vy*=-1;
+            }
+
+            for (let i=items.length-1; i>=0; i--) {
+                let it = items[i]; it.x+=it.vx; it.y+=it.vy;
+                if(it.x<0 || it.x>W) it.vx*=-1; if(it.y<0 || it.y>H-GH) it.vy*=-1;
+                if (M.hypot(player.x - it.x, (player.y-10) - (it.y-10)) < (player.s/2 + it.s/2)) {
+                    if (it.d.cat === 'sustainable') { playSound('sust'); texts.push({ x: it.x, y: it.y, t: `+${it.d.sp} pts`, c: '#55ff55', life: 60, m: 60 }); }
+                    if (it.d.cat === 'plastic') { playSound('plastic'); score++; }
+                    sustScore += it.d.sp; items.splice(i,1); updUI();
+                }
+            }
+        }
+
+        function draw() {
+            let p = M.min(score/MAX_P, 1), tox = 1-p;
+            
+            let bgTop = lerpC(colorDirty, colorClean, p);
+            let bgBot = lerpC({r: 5, g: 10, b: 5}, {r: 0, g: 40, b: 100}, p);
+            let grd = ctx.createLinearGradient(0,0,0,canvas.height);
+            grd.addColorStop(0, bgTop); grd.addColorStop(1, bgBot);
+            ctx.fillStyle = grd; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+            ctx.save();
+            ctx.translate(-camera.x * 0.4, -camera.y * 0.4); 
+            let t = Date.now() * 0.001;
+            let rayGrd = ctx.createLinearGradient(0, 0, 0, H);
+            rayGrd.addColorStop(0, `rgba(255,255,255,${0.1 + p*0.15})`); 
+            rayGrd.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = rayGrd;
+            
+            for(let i = -5; i < (W/100); i++) {
+                let rx = i * 300, off = M.sin(t + i) * 250;
+                ctx.beginPath(); 
+                ctx.moveTo(rx, 0); ctx.lineTo(rx + 100, 0);
+                ctx.lineTo(rx + 300 + off, H); ctx.lineTo(rx - 100 + off, H); 
+                ctx.fill();
+            }
+            ctx.restore();
+
+            ctx.globalAlpha = 1; ctx.shadowBlur = 0; ctx.save(); ctx.translate(-camera.x, -camera.y);
+
+            if(tox > 0) {
+                ctx.fillStyle = `rgba(10,20,5,${0.4*tox})`;
+                for(let o of oils) { if(o.x>camera.x-o.w && o.x<camera.x+camera.w+o.w) { ctx.beginPath(); ctx.ellipse(o.x,o.y,o.w/2,o.h/2,0,0,PI2); ctx.fill(); } }
+            }
+
+            if (tox > 0.05) {
+                let pA = 0.12*tox, bA = 0.3*tox, dA = 0.8*tox;
+                for (let m of micro) {
+                    if (m.x>camera.x-m.r && m.x<camera.x+camera.w+m.r && m.y>camera.y-m.r && m.y<camera.y+camera.h+m.r) {
+                        ctx.beginPath(); ctx.arc(m.x, m.y, m.r, 0, PI2); 
+                        ctx.fillStyle = `rgba(0,255,100,${pA})`; ctx.fill();
+                        ctx.strokeStyle = `rgba(0,255,100,${bA})`; ctx.lineWidth = 2; ctx.stroke();
+                        
+                        // OTIMIZAÇÃO: Usando fillRect em vez de arc e cores dinâmicas
+                        for(let d of m.dots) { 
+                            ctx.fillStyle = `rgba(${d.c},${dA})`;
+                            ctx.fillRect(m.x + d.dx - d.s/2, m.y + d.dy - d.s/2, d.s, d.s); 
+                        }
+                    }
+                }
+            }
+
+            ctx.fillStyle = lerpC({r:35,g:30,b:20}, {r:194,g:178,b:128}, p); ctx.fillRect(0, H-GH, W, GH);
+            ctx.fillStyle = lerpC({r:25,g:20,b:15}, {r:174,g:158,b:108}, p);
+            for(let w=0; w<W; w+=200) { ctx.beginPath(); ctx.arc(w+100, H-GH+15, 120, 0, M.PI, true); ctx.fill(); }
+
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
+            for(let pl of poll) if (p < pl.hideAt && pl.x > camera.x-100 && pl.x < camera.x+camera.w+100) { ctx.font=`${pl.s}px Arial`; ctx.fillText(pl.e, pl.x, pl.y); }
+            for(let d of decos) if (d.x > camera.x-100 && d.x < camera.x+camera.w+100) { ctx.globalAlpha = 0.2+(0.8*p); ctx.font=`${d.s}px Arial`; ctx.fillText(d.e, d.x, d.y); }
+            
+            ctx.globalAlpha = 1; ctx.fillStyle = tox > 0.5 ? "rgba(100,255,100,0.25)" : "rgba(255,255,255,0.25)";
+            for(let b of bubbles) if(b.x>camera.x-20 && b.x<camera.x+camera.w+20) { ctx.beginPath(); ctx.arc(b.x, b.y, b.s, 0, PI2); ctx.fill(); }
+
+            for (let i of items) {
+                if (i.x>camera.x-50 && i.x<camera.x+camera.w+50 && i.y>camera.y-50 && i.y<camera.y+camera.h+50) {
+                    ctx.beginPath(); ctx.arc(i.x, i.y, i.s*0.7, 0, PI2); ctx.fillStyle = i.d.cat==='plastic'?"rgba(255,50,50,0.15)":"rgba(50,255,50,0.15)"; ctx.fill();
+                    ctx.fillStyle="#fff"; ctx.font=`${i.s}px Arial`; ctx.fillText(i.d.e, i.x, i.y+2);
+                    ctx.font="bold 14px Arial"; ctx.lineWidth=3; ctx.strokeStyle="#000"; ctx.strokeText(i.d.n, i.x, i.y+i.s*0.9); ctx.fillText(i.d.n, i.x, i.y+i.s*0.9);
+                }
+            }
+
+            for (let a of animals) {
+                if (a.x>camera.x-150 && a.x<camera.x+camera.w+150) { ctx.save(); ctx.translate(a.x, a.y); if(a.vx<0) ctx.scale(-1,1); ctx.font=`${a.s}px Arial`; ctx.fillText(a.e, 0, 0); ctx.restore(); }
+            }
+
+            if (shark.x>camera.x-200 && shark.x<camera.x+camera.w+200) {
+                ctx.save(); ctx.translate(shark.x, shark.y); if(shark.vx<0) ctx.scale(-1,1);
+                if(shark.st==='chase'){ ctx.shadowColor="rgba(255,0,0,0.8)"; ctx.shadowBlur=15; }
+                ctx.font=`${shark.s}px Arial`; ctx.fillText(shark.e, 0, 0); ctx.restore(); ctx.shadowBlur=0;
+            }
+
+            for (let ft of texts) {
+                if(ft.x>camera.x-50 && ft.x<camera.x+camera.w+50) { ctx.save(); ctx.globalAlpha=M.max(0,ft.life/ft.m); ctx.font="bold 22px Arial"; ctx.lineWidth=3; ctx.strokeStyle="#000"; ctx.strokeText(ft.t,ft.x,ft.y); ctx.fillStyle=ft.c; ctx.fillText(ft.t,ft.x,ft.y); ctx.restore(); }
+            }
+            
+            if (invTimer===0 || F(Date.now()/150)%2===0) {
+                ctx.save(); ctx.translate(player.x, player.y); if(player.dir===1) ctx.scale(-1,1);
+                ctx.font=`${player.s}px Arial`; ctx.shadowColor = invTimer>0?"red":"rgba(0,0,0,0.8)"; ctx.shadowBlur = invTimer>0?20:8;
+                ctx.fillText(player.e, 0, 0); ctx.restore();
+            }
+            ctx.restore();
+        }
+
+        function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
+        initGame(); gameLoop();
+    </script>
+</body>
+</html>
