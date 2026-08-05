@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Joguinhos</title>
+    <link href="https://fonts.cdnfonts.com/css/lugrasimo" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="img/estrela.ico">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: url("img/moebius2.png") no-repeat center center fixed;
+            background-size: cover; /* Ajuste para cobrir a tela inteira */
+        }
+        h1 {
+            text-align: center;
+            font-size: 35px;
+            margin-bottom: 40px;
+            font-family: 'lugrasimo', sans-serif;
+            text-shadow:
+                1px 1px 0 #000,
+                -1px 1px 0 #000,
+                -1px -1px 0 #000,
+                1px -1px 0 #000;
+            color: white;                          
+        }
+        img::before {
+            display: none !important;
+        }
+        #showcase {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 1300px; /* 4 colunas de 200px + 3 espaços de 10px */
+            margin: auto;
+        }   
+        .game {
+            width: 260px;
+            height: 150px; /* Aumente a altura para tornar o jogo mais retangular */
+            margin: 10px; /* Aumente a margem para adicionar mais espaço entre os jogos */
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #000;
+            transition: transform .2s;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'lugrasimo', sans-serif;
+            font-size: 12px;
+                                                
+        }
+        .game:hover {
+            transform: scale(1.1);
+        }
+        .game img {
+            width: 100%;
+            height: 100%;
+        }
+        .game .title {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            background: rgba(0,0,0,0.5);
+            color: #fff;
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+            text-align: left;
+            font-weight: bold;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>Joguinhos</h1>
+    <div id="showcase"></div>
+
+    <script>
+        const games = [
+            { title: 'Simulação Espacial', img: 'img/jogos/espaco.png', link: 'espaco.html'},
+            { title: 'Malditos Óvnis', img: 'img/jogos/ruinadosinvasores.png', link: 'jogo.html'},
+            { title: 'Campo Minado', img: 'img/jogos/campominado.png', link: 'campo.html'},
+            { title: 'Jogo das Cores', img: 'img/jogos/jogodascores.png', link: 'cores/jogodascores.html'},
+            { title: 'Quadradossauro', img: 'img/jogos/quadradossauro.png', link: 'quadradossauro.html'},
+            { title: 'Simulação 3D', img: 'img/jogos/3d.png', link: '3d.html'},
+            { title: 'Mergulho Sustentável', img: 'img/jogos/microplastico.png', link: 'microplastico.html'},
+            // Adicione mais jogos aqui
+        ];
+
+        const showcase = document.getElementById('showcase');
+
+        games.forEach(game => {
+            const gameDiv = document.createElement('div');
+            gameDiv.className = 'game';
+
+            const img = document.createElement('img');
+            img.src = game.img;
+
+            const titleDiv = document.createElement('div');
+            titleDiv.className = 'title';
+            titleDiv.textContent = game.title;
+
+            gameDiv.appendChild(img);
+            gameDiv.appendChild(titleDiv);
+
+            // Adicione um evento de clique ao gameDiv para redirecionar para a página do jogo
+            gameDiv.addEventListener('click', () => {
+                window.location.href = game.link;
+            });
+
+            showcase.appendChild(gameDiv);
+        });
+    </script>
+</body>
+</html>
